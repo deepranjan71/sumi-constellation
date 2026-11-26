@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="A living constellation, made for Sumi Lama.">
+  <title>For Sumi — Constellation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --white: #f5efff;
+      --dim: rgba(224, 214, 242, .53);
+      --violet: #c8a9ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000000;
+    }
+
+    body {
+      color: var(--white);
+      font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .universe {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 100svh;
+      overflow: hidden;
+      background: #000000;
+      isolation: isolate;
+    }
+
+    #sky {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .topline, .bottomline {
+      position: absolute;
+      z-index: 2;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: max(23px, env(safe-area-inset-left));
+      padding-right: max(23px, env(safe-area-inset-right));
+      pointer-events: none;
+    }
+
+    .topline {
+      top: 0;
+      padding-top: max(22px, env(safe-area-inset-top));
+    }
+
+    .signature {
+      color: rgba(242, 232, 255, .76);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .24em;
+    }
+
+    .sound-button {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      color: rgba(241, 230, 255, .82);
+      border: 1px solid rgba(220, 203, 255, .21);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .035);
+      font-size: 14px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: border-color .3s ease, background .3s ease, color .3s ease;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+
+    .sound-button[aria-pressed="true"] {
+      color: #eadbff;
+      border-color: rgba(200, 169, 255, .55);
+      background: rgba(200, 169, 255, .1);
+    }
+
+    .sound-button:focus-visible {
+      outline: 1px solid var(--violet);
+      outline-offset: 4px;
+    }
+
+    .bottomline {
+      bottom: 0;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: max(26px, env(safe-area-inset-bottom));
+      gap: 11px;
+    }
+
+    .formation-name {
+      color: rgba(243, 234, 255, .92);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: .32em;
+      text-indent: .32em;
+      text-align: center;
+      text-shadow: 0 0 22px rgba(183, 142, 255, .42);
+      transition: opacity .55s ease, transform .7s ease;
+    }
+
+    .formation-name.changing { opacity: 0; transform: translateY(5px); }
+
+    .formation-hint {
+      color: rgba(219, 207, 238, .38);
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: .21em;
+      text-transform: uppercase;
+    }
+
+    .page-mark {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      right: max(22px, env(safe-area-inset-right));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .page-index {
+      color: rgba(232, 220, 255, .45);
+      font-size: 8px;
+      letter-spacing: .14em;
+      writing-mode: vertical-rl;
+    }
+
+    .page-rule {
+      width: 1px;
+      height: 28px;
+      background: linear-gradient(transparent, rgba(204, 174, 255, .58), transparent);
+    }
+
+    @media (min-width: 700px) {
+      .topline, .bottomline { padding-left: 46px; padding-right: 46px; }
+      .bottomline { padding-bottom: 35px; }
+      .page-mark { right: 42px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .formation-name { transition-duration: .01ms; }
+    }
+  </style>
+</head>
+<body>
+  <main class="universe" aria-label="Interactive particle constellation for Sumi Lama">
+    <canvas id="sky" aria-label="Moving stars gather into a name, an anniversary date, a birthday wish, and a heart. Tap to change the constellation."></canvas>
+    <header class="topline">
+      <span class="signature">A UNIVERSE, FOR YOU</span>
+      <button class="sound-button" id="sound-button" type="button" aria-label="Turn music on" aria-pressed="false" title="Turn music on">
+        <span id="sound-icon" aria-hidden="true">♫</span>
+      </button>
+    </header>
+    <div class="page-mark" aria-hidden="true">
+      <span class="page-index" id="page-index">00 / 04</span>
+      <span class="page-rule"></span>
+    </div>
+    <footer class="bottomline" aria-live="polite">
+      <span class="formation-name" id="formation-name">A SKY FULL OF STARS</span>
+      <span class="formation-hint" id="formation-hint">tap to find her</span>
+    </footer>
+  </main>
+  <script>
+    (() => {
+      const ANNIVERSARY_DATE = "12-11-2026";
+      const canvas = document.getElementById("sky");
+      const context = canvas.getContext("2d", { alpha: false });
+      const nameLabel = document.getElementById("formation-name");
+      const pageIndex = document.getElementById("page-index");
+      const formationHint = document.getElementById("formation-hint");
+      const soundButton = document.getElementById("sound-button");
+      const soundIcon = document.getElementById("sound-icon");
+      const offscreen = document.createElement("canvas");
+      const offscreenContext = offscreen.getContext("2d", { willReadFrequently: true });
+      const formations = [
+        { label: "HAPPY BIRTHDAY", type: "birthday" },
+        { label: "SUMI LAMA", type: "name" },
+        { label: "OUR ANNIVERSARY", type: "date" },
+        { label: "A LITTLE UNIVERSE", type: "heart" }
+      ];
+      const particles = [];
+      const stars = [];
+      const planets = [];
+      const pointer = { x: -1000, y: -1000, active: false };
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const particleCount = 720;
+      let width = 0;
+      let height = 0;
+      let pixelRatio = 1;
+      let formationIndex = -1;
+      let targets = [];
+      let frame = 0;
+      let previousTime = 0;
+      let audioContext = null;
+      let masterGain = null;
+      let musicTimer = null;
+      let musicOn = false;
+      let musicPreferenceSet = false;
+      let noteIndex = 0;
+      let labelTimer = null;
+      let lastAdvanceAt = -Infinity;
+
+      function makeStars() {
+        stars.length = 0;
+        const amount = Math.max(50, Math.min(115, Math.round(width * height / 8500)));
+        for (let i = 0; i < amount; i++) {
+          stars.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 1.05 + .2,
+            phase: Math.random() * Math.PI * 2,
+            speed: Math.random() * .0007 + .0002
+          });
+        }
+      }
+
+      function makePlanets() {
+        planets.length = 0;
+        const palette = [
+          { x: .1, y: .25, size: .019, light: "#fff1bd", color: "#b47a52", dark: "#3d284d", glow: "#e6a76f" },
+          { x: .89, y: .3, size: .024, light: "#d8f8ff", color: "#638dc4", dark: "#292b65", glow: "#79baff", ring: true },
+          { x: .17, y: .73, size: .014, light: "#ffe2d4", color: "#c77790", dark: "#49294e", glow: "#ff9bb5" },
+          { x: .84, y: .76, size: .02, light: "#e8d8ff", color: "#9273c5", dark: "#342452", glow: "#c19cff" },
+          { x: .54, y: .16, size: .012, light: "#e1fff4", color: "#61b8a5", dark: "#214354", glow: "#73e0cb" }
+        ];
+        palette.forEach((planet) => {
+          planets.push({
+            ...planet,
+            x: width * planet.x,
+            y: height * planet.y,
+            radius: Math.max(5, Math.min(11, width * planet.size)),
+            phase: Math.random() * Math.PI * 2
+          });
+        });
+      }
+
+      function drawPlanets(time) {
+        for (const planet of planets) {
+          const x = planet.x + Math.sin(time * .00012 + planet.phase) * planet.radius * 1.2;
+          const y = planet.y + Math.cos(time * .0001 + planet.phase) * planet.radius * .8;
+          const radius = planet.radius;
+          context.save();
+          if (planet.ring) {
+            context.globalAlpha = .3;
+            context.strokeStyle = planet.light;
+            context.lineWidth = 1.2;
+            context.beginPath();
+            context.ellipse(x, y, radius * 1.8, radius * .55, -.22, 0, Math.PI * 2);
+            context.stroke();
+          }
+          const globe = context.createRadialGradient(
+            x - radius * .36, y - radius * .42, radius * .08,
+            x, y, radius
+          );
+          globe.addColorStop(0, planet.light);
+          globe.addColorStop(.38, planet.color);
+          globe.addColorStop(1, planet.dark);
+          context.globalAlpha = .82;
+          context.shadowColor = planet.glow;
+          context.shadowBlur = radius * 2;
+          context.fillStyle = globe;
+          context.beginPath();
+          context.arc(x, y, radius, 0, Math.PI * 2);
+          context.fill();
+          context.restore();
+        }
+      }
+
+      function maskPoints(type) {
+        offscreen.width = Math.max(1, Math.round(width));
+        offscreen.height = Math.max(1, Math.round(height));
+        const w = offscreen.width;
+        const h = offscreen.height;
+        offscreenContext.clearRect(0, 0, w, h);
+        offscreenContext.fillStyle = "#ffffff";
+        offscreenContext.textAlign = "center";
+        offscreenContext.textBaseline = "middle";
+
+        if (type === "heart") {
+          const scale = Math.min(w * .0175, h * .008, 6);
+          const centerX = w * .5;
+          const centerY = h * .48;
+          offscreenContext.beginPath();
+          for (let step = 0; step <= 240; step++) {
+            const t = step / 240 * Math.PI * 2;
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+            const px = centerX + x * scale;
+            const py = centerY - y * scale;
+            if (step === 0) offscreenContext.moveTo(px, py);
+            else offscreenContext.lineTo(px, py);
+          }
+          offscreenContext.closePath();
+          offscreenContext.fill();
+        } else {
+          let text;
+          let fontSize;
+          if (type === "date") {
+            text = ANNIVERSARY_DATE;
+            fontSize = Math.min(w * .083, 34);
+          } else if (type === "birthday") {
+            text = "HAPPY BIRTHDAY";
+            fontSize = Math.min(w * .11, 48);
+          } else {
+            text = "SUMI LAMA";
+            fontSize = Math.min(w * .205, 92);
+          }
+          offscreenContext.font = `600 ${fontSize}px "Avenir Next", Avenir, "Segoe UI", sans-serif`;
+          const maxWidth = w * (type === "date" ? .88 : .9);
+          const measured = offscreenContext.measureText(text).width;
+          if (measured > maxWidth) {
+            fontSize *= maxWidth / measured;
+            offscreenContext.font = `600 ${fontSize}px "Avenir Next", Avenir, "Segoe UI", sans-serif`;
+          }
+          offscreenContext.fillText(text, w * .5, h * .48);
+        }
+
+        const image = offscreenContext.getImageData(0, 0, offscreen.width, offscreen.height);
+        const raw = [];
+        const step = Math.max(4, Math.min(5.2, width / 78));
+        for (let y = 0; y < h; y += step) {
+          for (let x = 0; x < w; x += step) {
+            if (image.data[(Math.floor(y) * w + Math.floor(x)) * 4 + 3] > 60) raw.push({ x, y });
+          }
+        }
+        if (raw.length <= particleCount) return raw;
+        const sampled = [];
+        const stride = raw.length / particleCount;
+        for (let i = 0; i < particleCount; i++) sampled.push(raw[Math.floor(i * stride)]);
+        return sampled;
+      }
+
+      function seedParticles() {
+        particles.length = 0;
+        for (let i = 0; i < particleCount; i++) {
+          const target = targets[i % targets.length] || { x: width / 2, y: height / 2 };
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - .5) * .8,
+            vy: (Math.random() - .5) * .8,
+            tx: target.x + (Math.random() - .5) * 1.4,
+            ty: target.y + (Math.random() - .5) * 1.4,
+            phase: Math.random() * Math.PI * 2,
+            radius: Math.random() * .85 + .48,
+            hue: Math.random() < .72 ? 267 + Math.random() * 35 : 188 + Math.random() * 28
+          });
+        }
+      }
+
+      function seedStarfield() {
+        particles.length = 0;
+        for (let i = 0; i < particleCount; i++) {
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - .5) * .12,
+            vy: (Math.random() - .5) * .12,
+            phase: Math.random() * Math.PI * 2,
+            radius: Math.random() * .85 + .38,
+            hue: Math.random() < .72 ? 267 + Math.random() * 35 : 188 + Math.random() * 28
+          });
+        }
+      }
+
+      function changeFormation(nextIndex) {
+        formationIndex = (nextIndex + formations.length) % formations.length;
+        const formation = formations[formationIndex];
+        targets = maskPoints(formation.type);
+        if (!particles.length) {
+          seedParticles();
+        } else {
+          particles.forEach((particle, i) => {
+            const target = targets[i % targets.length];
+            particle.tx = target.x + (Math.random() - .5) * 1.4;
+            particle.ty = target.y + (Math.random() - .5) * 1.4;
+          });
+        }
+        window.clearTimeout(labelTimer);
+        nameLabel.classList.add("changing");
+        labelTimer = window.setTimeout(() => {
+          nameLabel.textContent = formation.label;
+          pageIndex.textContent = `${String(formationIndex + 1).padStart(2, "0")} / ${String(formations.length).padStart(2, "0")}`;
+          formationHint.textContent = "tap to transform";
+          nameLabel.classList.remove("changing");
+        }, reducedMotion ? 0 : 240);
+      }
+
+      function advanceFormation(direction) {
+        if (formationIndex < 0 && direction < 0) return;
+        const now = performance.now();
+        if (now - lastAdvanceAt < 320) return;
+        lastAdvanceAt = now;
+        changeFormation(formationIndex + direction);
+        if (direction > 0 && !musicOn && !musicPreferenceSet) beginMusic();
+      }
+
+      function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        context.fillStyle = "#000000";
+        context.fillRect(0, 0, width, height);
+        makeStars();
+        makePlanets();
+        if (formationIndex < 0) {
+          seedStarfield();
+        } else {
+          targets = maskPoints(formations[formationIndex].type);
+          if (!particles.length) seedParticles();
+          else particles.forEach((particle, i) => {
+            const target = targets[i % targets.length];
+            particle.tx = target.x;
+            particle.ty = target.y;
+            particle.x = Math.min(width, Math.max(0, particle.x));
+            particle.y = Math.min(height, Math.max(0, particle.y));
+          });
+        }
+      }
+
+      function draw(time) {
+        const delta = Math.min(2, previousTime ? (time - previousTime) / 16.67 : 1);
+        previousTime = time;
+        context.fillStyle = "rgba(0, 0, 0, .24)";
+        context.fillRect(0, 0, width, height);
+
+        for (const star of stars) {
+          const shimmer = .22 + (Math.sin(time * star.speed + star.phase) + 1) * .23;
+          context.fillStyle = `rgba(218, 210, 255, ${shimmer})`;
+          context.beginPath();
+          context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+          context.fill();
+        }
+        drawPlanets(time);
+
+        const pointerStrength = pointer.active && !reducedMotion ? .052 : 0;
+        const forming = formationIndex >= 0;
+        for (const particle of particles) {
+          const driftX = reducedMotion ? 0 : Math.sin(time * .00055 + particle.phase) * .28;
+          const driftY = reducedMotion ? 0 : Math.cos(time * .00048 + particle.phase) * .28;
+          let ax = forming ? (particle.tx - particle.x) * .018 + driftX * .012 : 0;
+          let ay = forming ? (particle.ty - particle.y) * .018 + driftY * .012 : 0;
+          if (pointerStrength) {
+            const dx = pointer.x - particle.x;
+            const dy = pointer.y - particle.y;
+            const distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared < 24000) {
+              const distance = Math.sqrt(distanceSquared) + 1;
+              const pull = (1 - distance / 155) * pointerStrength;
+              ax += dx / distance * pull;
+              ay += dy / distance * pull;
+            }
+          }
+          if (forming) {
+            particle.vx = (particle.vx + ax * delta) * .88;
+            particle.vy = (particle.vy + ay * delta) * .88;
+            particle.x += particle.vx * delta;
+            particle.y += particle.vy * delta;
+          } else {
+            particle.vx = (particle.vx + ax * delta) * .985;
+            particle.vy = (particle.vy + ay * delta) * .985;
+            particle.x += (particle.vx + driftX * .09) * delta;
+            particle.y += (particle.vy + driftY * .09) * delta;
+            if (particle.x < -2) particle.x = width + 2;
+            else if (particle.x > width + 2) particle.x = -2;
+            if (particle.y < -2) particle.y = height + 2;
+            else if (particle.y > height + 2) particle.y = -2;
+          }
+          const glow = .48 + (Math.sin(time * .0014 + particle.phase) + 1) * .22;
+          context.fillStyle = `hsla(${particle.hue}, 95%, 83%, ${glow})`;
+          context.beginPath();
+          context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+          context.fill();
+        }
+        frame = window.requestAnimationFrame(draw);
+      }
+
+      function playNote(frequency) {
+        if (!audioContext || !masterGain || !musicOn) return;
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const envelope = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, now);
+        envelope.gain.setValueAtTime(.0001, now);
+        envelope.gain.exponentialRampToValueAtTime(.15, now + .16);
+        envelope.gain.exponentialRampToValueAtTime(.0001, now + 2.8);
+        oscillator.connect(envelope);
+        envelope.connect(masterGain);
+        oscillator.start(now);
+        oscillator.stop(now + 2.85);
+      }
+
+      function beginMusic() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          soundButton.setAttribute("aria-label", "Ambient music is unavailable");
+          soundButton.title = "Ambient music is unavailable";
+          soundButton.disabled = true;
+          return;
+        }
+        if (!audioContext) {
+          audioContext = new AudioContextClass();
+          masterGain = audioContext.createGain();
+          masterGain.gain.value = .075;
+          masterGain.connect(audioContext.destination);
+          [130.81, 164.81, 196, 261.63].forEach((frequency, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            oscillator.type = index === 1 ? "sine" : "triangle";
+            oscillator.frequency.value = frequency;
+            gain.gain.value = index === 0 ? .08 : .024;
+            oscillator.connect(gain);
+            gain.connect(masterGain);
+            oscillator.start();
+          });
+        }
+        musicOn = true;
+        audioContext.resume();
+        playNote([392, 329.63, 261.63, 329.63, 440, 392][noteIndex++ % 6]);
+        musicTimer = window.setInterval(() => {
+          playNote([392, 329.63, 261.63, 329.63, 440, 392][noteIndex++ % 6]);
+        }, 2800);
+        soundButton.setAttribute("aria-pressed", "true");
+        soundButton.setAttribute("aria-label", "Turn music off");
+        soundButton.title = "Turn music off";
+        soundIcon.textContent = "♫";
+      }
+
+      function stopMusic() {
+        musicOn = false;
+        window.clearInterval(musicTimer);
+        musicTimer = null;
+        if (audioContext && audioContext.state === "running") audioContext.suspend();
+        soundButton.setAttribute("aria-pressed", "false");
+        soundButton.setAttribute("aria-label", "Turn music on");
+        soundButton.title = "Turn music on";
+        soundIcon.textContent = "♪";
+      }
+
+      function toggleMusic() {
+        if (musicOn) stopMusic();
+        else beginMusic();
+      }
+
+      canvas.addEventListener("pointermove", (event) => {
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        pointer.active = true;
+      }, { passive: true });
+
+      canvas.addEventListener("pointerleave", () => { pointer.active = false; }, { passive: true });
+      canvas.addEventListener("pointerdown", () => advanceFormation(1));
+
+      soundButton.addEventListener("click", () => {
+        musicPreferenceSet = true;
+        toggleMusic();
+      });
+      window.addEventListener("resize", resize, { passive: true });
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight" || event.key === " ") {
+          event.preventDefault();
+          advanceFormation(1);
+        } else if (event.key === "ArrowLeft") {
+          advanceFormation(-1);
+        }
+      });
+
+      resize();
+      frame = window.requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
