@@ -356,7 +356,7 @@
       }
 
       function drawLinks() {
-        if (formationIndex < 0 || !links.length) return;
+        if (formationIndex < 0 || formations[formationIndex].type !== "heart" || !links.length) return;
         context.save();
         context.lineWidth = .65;
         context.beginPath();
@@ -372,7 +372,7 @@
             context.lineTo(b.x, b.y);
           }
         }
-        context.strokeStyle = "rgba(167, 146, 220, .11)";
+        context.strokeStyle = "rgba(167, 146, 220, .06)";
         context.stroke();
         context.beginPath();
         for (const [first, second] of links) {
@@ -387,7 +387,7 @@
             context.lineTo(b.x, b.y);
           }
         }
-        context.strokeStyle = "rgba(227, 207, 255, .14)";
+        context.strokeStyle = "rgba(227, 207, 255, .08)";
         context.stroke();
         context.restore();
       }
@@ -423,7 +423,7 @@
           let fontSize;
           if (type === "date") {
             text = ANNIVERSARY_DATE;
-            fontSize = Math.min(w * .083, 34);
+            fontSize = Math.min(w * .11, 42);
           } else if (type === "birthday") {
             text = "HAPPY BIRTHDAY";
             fontSize = Math.min(w * .11, 48);
@@ -619,7 +619,7 @@
           const glow = .48 + (Math.sin(time * .0014 + particle.phase) + 1) * .22;
           context.fillStyle = `hsla(${particle.hue}, 95%, 83%, ${glow})`;
           context.beginPath();
-          context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+          context.arc(particle.x, particle.y, particle.radius * (forming ? 1.2 : 1), 0, Math.PI * 2);
           context.fill();
         }
         frame = window.requestAnimationFrame(draw);
