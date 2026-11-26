@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <meta name="description" content="A living constellation, made for Sumi Lama.">
-  <title>For Sumi — Constellation</title>
+  <title>For Sumi â€” Constellation</title>
   <style>
     :root {
       color-scheme: dark;
@@ -180,7 +180,7 @@
     <header class="topline">
       <span class="signature">A UNIVERSE, FOR YOU</span>
       <button class="sound-button" id="sound-button" type="button" aria-label="Turn music on" aria-pressed="false" title="Turn music on">
-        <span id="sound-icon" aria-hidden="true">♫</span>
+        <span id="sound-icon" aria-hidden="true">â™«</span>
       </button>
     </header>
     <div class="page-mark" aria-hidden="true">
@@ -213,6 +213,7 @@
       const particles = [];
       const stars = [];
       const planets = [];
+      const links = [];
       const pointer = { x: -1000, y: -1000, active: false };
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const particleCount = 720;
@@ -241,7 +242,8 @@
             y: Math.random() * height,
             radius: Math.random() * 1.05 + .2,
             phase: Math.random() * Math.PI * 2,
-            speed: Math.random() * .0007 + .0002
+            speed: Math.random() * .0007 + .0002,
+            sparkle: Math.random() > .94
           });
         }
       }
@@ -296,6 +298,98 @@
           context.fill();
           context.restore();
         }
+      }
+
+      function buildLinks() {
+        links.length = 0;
+        const grid = new Map();
+        const cellSize = 9;
+        for (let i = 0; i < particles.length; i++) {
+          const target = targets[i % targets.length];
+          const cellX = Math.floor(target.x / cellSize);
+          const cellY = Math.floor(target.y / cellSize);
+          for (let x = cellX - 1; x <= cellX + 1; x++) {
+            for (let y = cellY - 1; y <= cellY + 1; y++) {
+              const neighbors = grid.get(`${x},${y}`);
+              if (!neighbors) continue;
+              for (const neighbor of neighbors) {
+                const other = targets[neighbor % targets.length];
+                const dx = target.x - other.x;
+                const dy = target.y - other.y;
+                const distanceSquared = dx * dx + dy * dy;
+                if (distanceSquared > 9 && distanceSquared < 68) links.push([neighbor, i]);
+              }
+            }
+          }
+          const key = `${cellX},${cellY}`;
+          if (!grid.has(key)) grid.set(key, []);
+          grid.get(key).push(i);
+        }
+      }
+
+      function drawNebula(time) {
+        const drift = Math.sin(time * .00008) * width * .025;
+        const glow = context.createRadialGradient(
+          width * .5 + drift, height * .48, 0,
+          width * .5 + drift, height * .48, Math.max(width, height) * .58
+        );
+        glow.addColorStop(0, "rgba(80, 39, 113, .1)");
+        glow.addColorStop(.48, "rgba(35, 38, 89, .045)");
+        glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+        context.fillStyle = glow;
+        context.fillRect(0, 0, width, height);
+      }
+
+      function drawOrbits() {
+        context.save();
+        context.strokeStyle = "rgba(173, 151, 218, .075)";
+        context.lineWidth = .7;
+        context.beginPath();
+        context.ellipse(width * .5, height * .48, width * .35, height * .27, -.12, 0, Math.PI * 2);
+        context.stroke();
+        context.strokeStyle = "rgba(125, 157, 208, .045)";
+        context.setLineDash([1, 8]);
+        context.beginPath();
+        context.ellipse(width * .5, height * .48, width * .44, height * .36, .16, 0, Math.PI * 2);
+        context.stroke();
+        context.restore();
+      }
+
+      function drawLinks() {
+        if (formationIndex < 0 || !links.length) return;
+        context.save();
+        context.lineWidth = .65;
+        context.beginPath();
+        for (const [first, second] of links) {
+          const a = particles[first];
+          const b = particles[second];
+          const aDx = a.x - a.tx;
+          const aDy = a.y - a.ty;
+          const bDx = b.x - b.tx;
+          const bDy = b.y - b.ty;
+          if (aDx * aDx + aDy * aDy < 4900 && bDx * bDx + bDy * bDy < 4900) {
+            context.moveTo(a.x, a.y);
+            context.lineTo(b.x, b.y);
+          }
+        }
+        context.strokeStyle = "rgba(167, 146, 220, .11)";
+        context.stroke();
+        context.beginPath();
+        for (const [first, second] of links) {
+          const a = particles[first];
+          const b = particles[second];
+          const aDx = a.x - a.tx;
+          const aDy = a.y - a.ty;
+          const bDx = b.x - b.tx;
+          const bDy = b.y - b.ty;
+          if (aDx * aDx + aDy * aDy < 576 && bDx * bDx + bDy * bDy < 576) {
+            context.moveTo(a.x, a.y);
+            context.lineTo(b.x, b.y);
+          }
+        }
+        context.strokeStyle = "rgba(227, 207, 255, .14)";
+        context.stroke();
+        context.restore();
       }
 
       function maskPoints(type) {
@@ -408,6 +502,7 @@
             particle.ty = target.y + (Math.random() - .5) * 1.4;
           });
         }
+        buildLinks();
         window.clearTimeout(labelTimer);
         nameLabel.classList.add("changing");
         labelTimer = window.setTimeout(() => {
@@ -450,6 +545,7 @@
             particle.x = Math.min(width, Math.max(0, particle.x));
             particle.y = Math.min(height, Math.max(0, particle.y));
           });
+          buildLinks();
         }
       }
 
@@ -458,13 +554,29 @@
         previousTime = time;
         context.fillStyle = "rgba(0, 0, 0, .24)";
         context.fillRect(0, 0, width, height);
+        drawNebula(time);
+        drawOrbits();
 
         for (const star of stars) {
           const shimmer = .22 + (Math.sin(time * star.speed + star.phase) + 1) * .23;
           context.fillStyle = `rgba(218, 210, 255, ${shimmer})`;
-          context.beginPath();
-          context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-          context.fill();
+          if (star.sparkle) {
+            context.save();
+            context.globalAlpha = shimmer;
+            context.strokeStyle = "#e5dcff";
+            context.lineWidth = .55;
+            context.beginPath();
+            context.moveTo(star.x - star.radius * 2, star.y);
+            context.lineTo(star.x + star.radius * 2, star.y);
+            context.moveTo(star.x, star.y - star.radius * 2);
+            context.lineTo(star.x, star.y + star.radius * 2);
+            context.stroke();
+            context.restore();
+          } else {
+            context.beginPath();
+            context.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            context.fill();
+          }
         }
         drawPlanets(time);
 
@@ -501,6 +613,9 @@
             if (particle.y < -2) particle.y = height + 2;
             else if (particle.y > height + 2) particle.y = -2;
           }
+        }
+        drawLinks();
+        for (const particle of particles) {
           const glow = .48 + (Math.sin(time * .0014 + particle.phase) + 1) * .22;
           context.fillStyle = `hsla(${particle.hue}, 95%, 83%, ${glow})`;
           context.beginPath();
@@ -559,7 +674,7 @@
         soundButton.setAttribute("aria-pressed", "true");
         soundButton.setAttribute("aria-label", "Turn music off");
         soundButton.title = "Turn music off";
-        soundIcon.textContent = "♫";
+        soundIcon.textContent = "â™«";
       }
 
       function stopMusic() {
@@ -570,7 +685,7 @@
         soundButton.setAttribute("aria-pressed", "false");
         soundButton.setAttribute("aria-label", "Turn music on");
         soundButton.title = "Turn music on";
-        soundIcon.textContent = "♪";
+        soundIcon.textContent = "â™ª";
       }
 
       function toggleMusic() {
